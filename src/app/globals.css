@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+body { background: #faf7ff; color: #30283b; }
+.dark body { background: #17121f; color: #e6e0f0; }
+button, input { font: inherit; }
+/* Native select dropdowns inherit the select's translucent background, which breaks contrast — force solid colors. */
+select option { background: #ffffff; color: #30283b; }
+.dark select option { background: #1d1728; color: #e6e0f0; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes tl-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .tl-item { animation: tl-rise 0.35s ease both; }
+}

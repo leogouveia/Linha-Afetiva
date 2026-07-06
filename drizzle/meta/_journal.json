@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1782940470753,
+      "tag": "0001_boring_captain_universe",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782950165050,
+      "tag": "0002_events-model-add",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1782950188790,
+      "tag": "0003_events-model-migrate-drop",
+      "breakpoints": true
+    }
+  ]
+}
