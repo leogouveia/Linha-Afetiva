@@ -1,7 +1,9 @@
 "use client";
+import { useState } from "react";
 import { datePrecisionLabels, datePrecisions, eventStatusLabels, eventStatuses } from "@/lib/validation/event";
+import { TagMultiSelect, type TagOption } from "@/components/tag-select";
 
-export type TagOption = { id: number; name: string; color: string };
+export type { TagOption };
 
 export type EventDefaults = {
   date: Date;
@@ -28,6 +30,7 @@ export function collectEventPayload(form: FormData) {
 }
 
 export function EventFields({ event, allTags, selectedTagIds = [] }: { event?: EventDefaults; allTags: TagOption[]; selectedTagIds?: number[] }) {
+  const [tagIds, setTagIds] = useState(selectedTagIds);
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-3">
@@ -59,16 +62,8 @@ export function EventFields({ event, allTags, selectedTagIds = [] }: { event?: E
       {allTags.length > 0 && (
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">Tags</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {allTags.map((tag) => (
-              <label key={tag.id} className="cursor-pointer">
-                <input type="checkbox" name="tags" value={tag.id} defaultChecked={selectedTagIds.includes(tag.id)} className="peer sr-only" />
-                <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 px-3 py-1.5 text-sm text-slate-600 transition peer-checked:border-violet-400 peer-checked:bg-violet-50 peer-checked:text-violet-900 dark:border-violet-900 dark:text-slate-400 dark:peer-checked:border-violet-500 dark:peer-checked:bg-violet-950/50 dark:peer-checked:text-violet-100">
-                  <span aria-hidden className="size-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
-                  {tag.name}
-                </span>
-              </label>
-            ))}
+          <div className="mt-2">
+            <TagMultiSelect options={allTags} value={tagIds} onChange={setTagIds} name="tags" placeholder="Buscar tags…" />
           </div>
         </fieldset>
       )}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { statusBadgeClass } from "@/components/status-badge";
+import { TagMultiSelect } from "@/components/tag-select";
 import { formatEventDate, formatMonthYear } from "@/lib/dates";
 import { getPersonColor } from "@/lib/colors";
 import { eventStatusLabels, eventStatuses, type EventStatus } from "@/lib/validation/event";
@@ -13,6 +14,7 @@ export type TimelineEntry = {
   id: number;
   personId: number;
   personName: string;
+  avatarDataUrl: string | null;
   date: Date;
   datePrecision: string;
   status: string;
@@ -37,10 +39,6 @@ function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOpt
   const [tagIds, setTagIds] = useState<number[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-
-  function toggleTag(id: number) {
-    setTagIds((current) => (current.includes(id) ? current.filter((tagId) => tagId !== id) : [...current, id]));
-  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,22 +100,8 @@ function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOpt
         </button>
       </div>
       {allTags.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {allTags.map((tag) => {
-            const selected = tagIds.includes(tag.id);
-            return (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                aria-pressed={selected}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${selected ? "border-violet-400 bg-violet-50 text-violet-900 dark:border-violet-500 dark:bg-violet-950/50 dark:text-violet-100" : "border-violet-100 text-slate-600 dark:border-violet-900 dark:text-slate-400"}`}
-              >
-                <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: tag.color }} />
-                {tag.name}
-              </button>
-            );
-          })}
+        <div className="mt-3">
+          <TagMultiSelect options={allTags} value={tagIds} onChange={setTagIds} placeholder="Tags" />
         </div>
       )}
       {error && <p role="alert" className="mt-3 rounded-xl bg-rose-50 px-4 py-2.5 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
@@ -189,15 +173,29 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
                 <li key={entry.id}>
                   {showSeparator && <p className="relative z-10 ml-10 mt-6 mb-2 text-xs font-medium text-slate-400 first:mt-0 dark:text-slate-500">{monthKey}</p>}
                   <div className="tl-item grid grid-cols-[40px_minmax(0,1fr)]" style={{ animationDelay: `${Math.min(index, 12) * 0.03}s` }}>
-                    <div className="flex justify-center pt-[18px]">
-                      <span
-                        ref={(el) => {
-                          if (el) dotRefs.current.set(entry.id, el);
-                        }}
-                        aria-hidden
-                        className="relative z-10 size-3 rounded-full ring-4 ring-white dark:ring-[#17121f]"
-                        style={{ backgroundColor: color }}
-                      />
+                    <div className="flex justify-center pt-[14px]">
+                      {entry.avatarDataUrl ? (
+                        <span
+                          ref={(el) => {
+                            if (el) dotRefs.current.set(entry.id, el);
+                          }}
+                          aria-hidden
+                          className="relative z-10 block size-8 shrink-0 rounded-full p-[2px] ring-4 ring-white dark:ring-[#17121f]"
+                          style={{ backgroundColor: color }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={entry.avatarDataUrl} alt="" className="block h-full w-full rounded-full object-cover" />
+                        </span>
+                      ) : (
+                        <span
+                          ref={(el) => {
+                            if (el) dotRefs.current.set(entry.id, el);
+                          }}
+                          aria-hidden
+                          className="relative z-10 size-3 rounded-full ring-4 ring-white dark:ring-[#17121f]"
+                          style={{ backgroundColor: color }}
+                        />
+                      )}
                     </div>
                     <Link
                       href={`/app/pessoas/${entry.personId}`}

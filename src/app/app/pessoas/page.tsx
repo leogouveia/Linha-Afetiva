@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { statusBadgeClass } from "@/components/status-badge";
+import { toAvatarDataUrl } from "@/lib/avatar";
+import { getPersonColor } from "@/lib/colors";
 import { formatEventDate } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { eventTags, people, tags, timelineEvents } from "@/lib/db/schema";
@@ -56,7 +58,21 @@ export default async function PeoplePage() {
                   className="block rounded-2xl border border-violet-100 bg-white p-5 shadow-sm transition hover:border-violet-300 dark:border-violet-950 dark:bg-[#1d1728] dark:hover:border-violet-800"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-medium text-violet-950 dark:text-violet-100">{person.name}</span>
+                    <span className="flex items-center gap-3">
+                      <span
+                        className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white"
+                        style={{ backgroundColor: getPersonColor(person.id) }}
+                        aria-hidden
+                      >
+                        {person.avatar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={toAvatarDataUrl(person.avatar, person.avatarType)!} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          person.name.charAt(0).toUpperCase()
+                        )}
+                      </span>
+                      <span className="font-medium text-violet-950 dark:text-violet-100">{person.name}</span>
+                    </span>
                     {latest && (
                       <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[status] ?? statusBadgeClass.ended}`}>
                         {eventStatusLabels[status] ?? latest.status}

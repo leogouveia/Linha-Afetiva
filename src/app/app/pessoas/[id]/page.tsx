@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, desc, eq, inArray } from "drizzle-orm";
+import { toAvatarDataUrl } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { eventTags, people, tags, timelineEvents } from "@/lib/db/schema";
 import { PersonDetail } from "./person-detail";
@@ -33,7 +34,11 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
       <Link href="/app/pessoas" className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400">← Pessoas</Link>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-violet-950 dark:text-violet-100">{person.name}</h1>
       <div className="mt-8">
-        <PersonDetail person={{ id: person.id, name: person.name, origin: person.origin }} events={eventsWithTags} allTags={allTags} />
+        <PersonDetail
+          person={{ id: person.id, name: person.name, origin: person.origin, avatarDataUrl: toAvatarDataUrl(person.avatar, person.avatarType) }}
+          events={eventsWithTags}
+          allTags={allTags}
+        />
       </div>
     </div>
   );

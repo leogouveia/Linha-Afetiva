@@ -9,7 +9,7 @@ async function main() {
   const email = (process.argv[2] ?? (await input({ message: "Email:" })))
     .trim()
     .toLowerCase();
-  const password = process.argv[3] ?? (await passwordPrompt({ message: "Senha:" }));
+  const password = process.argv[3] ?? (await passwordPrompt({ message: "Nova senha:" }));
   const parsed = loginSchema.safeParse({ email, password });
   if (!parsed.success || password.length < 8)
     throw new Error(
@@ -17,18 +17,13 @@ async function main() {
         ? "A senha deve ter pelo menos 8 caracteres."
         : parsed.error.issues[0]?.message,
     );
-  if (db.select().from(users).where(eq(users.email, email)).get())
-    throw new Error("Já existe um usuário com este email.");
-  const now = new Date();
-  db.insert(users)
-    .values({
-      email,
-      passwordHash: await hash(password),
-      createdAt: now,
-      updatedAt: now,
-    })
+  const user = db.select().from(users).where(eq(users.email, email)).get();
+  if (!user) throw new Error("Nenhum usuário com este email. Use npm run user:create.");
+  db.update(users)
+    .set({ passwordHash: await hash(password), updatedAt: new Date() })
+    .where(eq(users.id, user.id))
     .run();
-  console.log(`Usuário ${email} criado com sucesso.`);
+  console.log(`Senha de ${email} atualizada com sucesso.`);
 }
 
 main().catch((error) => {

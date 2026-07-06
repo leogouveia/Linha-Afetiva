@@ -1,15 +1,16 @@
 import { asc, count, desc, eq, inArray } from "drizzle-orm";
+import { toAvatarDataUrl } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { eventTags, people, tags, timelineEvents } from "@/lib/db/schema";
 import { Timeline, type TimelineEntry } from "./timeline";
 
 export default async function DashboardPage() {
   const [peopleRows, eventRows, allTags] = await Promise.all([
-    db.select({ id: people.id, name: people.name }).from(people).orderBy(asc(people.name)),
+    db.select({ id: people.id, name: people.name, avatar: people.avatar, avatarType: people.avatarType }).from(people).orderBy(asc(people.name)),
     db.select().from(timelineEvents).orderBy(desc(timelineEvents.date), desc(timelineEvents.id)),
     db.select({ id: tags.id, name: tags.name, color: tags.color }).from(tags).orderBy(asc(tags.name)),
   ]);
-  const personById = new Map(peopleRows.map((person) => [person.id, person.name]));
+  const personById = new Map(peopleRows.map((person) => [person.id, person]));
   const links = eventRows.length
     ? await db
         .select({ eventId: eventTags.eventId, id: tags.id, name: tags.name, color: tags.color })
@@ -20,15 +21,19 @@ export default async function DashboardPage() {
 
   const entries: TimelineEntry[] = eventRows
     .filter((event) => personById.has(event.personId))
-    .map((event) => ({
-      id: event.id,
-      personId: event.personId,
-      personName: personById.get(event.personId)!,
-      date: event.date,
-      datePrecision: event.datePrecision,
-      status: event.status,
-      tags: links.filter((link) => link.eventId === event.id).map((link) => ({ id: link.id, name: link.name, color: link.color })),
-    }));
+    .map((event) => {
+      const person = personById.get(event.personId)!;
+      return {
+        id: event.id,
+        personId: event.personId,
+        personName: person.name,
+        avatarDataUrl: toAvatarDataUrl(person.avatar, person.avatarType),
+        date: event.date,
+        datePrecision: event.datePrecision,
+        status: event.status,
+        tags: links.filter((link) => link.eventId === event.id).map((link) => ({ id: link.id, name: link.name, color: link.color })),
+      };
+    });
 
   const [totalPeople] = await db.select({ value: count() }).from(people);
 
@@ -42,7 +47,7 @@ export default async function DashboardPage() {
         </p>
       </div>
       <div className="mt-6">
-        <Timeline entries={entries} people={peopleRows} allTags={allTags} />
+        <Timeline entries={entries} people={peopleRows.map((person) => ({ id: person.id, name: person.name }))} allTags={allTags} />
       </div>
     </>
   );

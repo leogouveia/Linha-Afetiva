@@ -1,13 +1,15 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AvatarInput } from "@/components/avatar-input";
 import { collectEventPayload, EventFields, inputClass, labelClass, type TagOption } from "@/components/event-fields";
 import { statusBadgeClass } from "@/components/status-badge";
+import { getPersonColor } from "@/lib/colors";
 import { formatEventDate } from "@/lib/dates";
 import { eventStatusLabels, type EventStatus } from "@/lib/validation/event";
 import { personOrigins } from "@/lib/validation/person";
 
-export type PersonIdentity = { id: number; name: string; origin: string };
+export type PersonIdentity = { id: number; name: string; origin: string; avatarDataUrl: string | null };
 export type PersonEvent = {
   id: number;
   date: Date;
@@ -75,7 +77,7 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
     const response = await fetch(`/api/people/${person.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.get("name"), origin: form.get("origin") }),
+      body: JSON.stringify({ name: form.get("name"), origin: form.get("origin"), avatar: form.get("avatar") || null }),
     });
     setSavingIdentity(false);
     if (!response.ok) {
@@ -116,6 +118,7 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
   return (
     <div className="space-y-10">
       <form onSubmit={saveIdentity} className="space-y-5 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
+        <AvatarInput name="avatar" initialDataUrl={person.avatarDataUrl} ringColor={getPersonColor(person.id)} />
         <div className="grid gap-5 sm:grid-cols-2">
           <label className={labelClass}>
             Nome

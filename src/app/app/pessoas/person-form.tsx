@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AvatarInput } from "@/components/avatar-input";
 import { collectEventPayload, EventFields, inputClass, labelClass, type TagOption } from "@/components/event-fields";
 import { personOrigins } from "@/lib/validation/person";
 
@@ -17,6 +18,7 @@ export function PersonForm({ allTags }: { allTags: TagOption[] }) {
     const payload = {
       name: form.get("name"),
       origin: form.get("origin"),
+      avatar: form.get("avatar") || null,
       ...collectEventPayload(form),
     };
     const response = await fetch("/api/people", {
@@ -37,6 +39,7 @@ export function PersonForm({ allTags }: { allTags: TagOption[] }) {
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      <AvatarInput name="avatar" />
       <label className={labelClass}>
         Nome
         <input name="name" required className={inputClass} />

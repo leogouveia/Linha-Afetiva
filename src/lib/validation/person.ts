@@ -7,6 +7,7 @@ export type PersonOrigin = (typeof personOrigins)[number];
 const identityFields = {
   name: z.string().trim().min(1, "Informe o nome."),
   origin: z.enum(personOrigins, { error: "Informe a origem." }),
+  avatar: z.string().nullable().optional(),
 };
 
 // Creating a person always creates their first registro along with the identity.

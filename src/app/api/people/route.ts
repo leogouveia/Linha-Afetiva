@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { parseAvatarDataUrl } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { eventTags, people, timelineEvents } from "@/lib/db/schema";
 import { personCreateSchema } from "@/lib/validation/person";
@@ -9,9 +10,15 @@ export async function POST(request: Request) {
   const parsed = personCreateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
   const data = parsed.data;
+  let avatarFields;
+  try {
+    avatarFields = parseAvatarDataUrl(data.avatar);
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Foto inválida." }, { status: 400 });
+  }
   try {
     const person = db.transaction((tx) => {
-      const created = tx.insert(people).values({ name: data.name, origin: data.origin }).returning().get();
+      const created = tx.insert(people).values({ name: data.name, origin: data.origin, ...avatarFields }).returning().get();
       const event = tx
         .insert(timelineEvents)
         .values({ personId: created.id, date: data.date, datePrecision: data.datePrecision, status: data.status, note: data.note ?? null })

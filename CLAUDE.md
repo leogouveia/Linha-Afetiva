@@ -63,7 +63,7 @@ Seguir a ordem abaixo. Ao concluir uma etapa, marcar com `[x]` antes de iniciar 
 - [x] Gestão de tags: criar/editar/excluir tags com cor (paleta fixa de 8 cores) em `/app/tags`, associação via chips no formulário da pessoa
 - [x] Modelo de registros (acontecimentos): a unidade da linha do tempo é o registro (data + situação + tags + nota), não a pessoa. Pessoa = identidade (nome, origem), listada/editada em `/app/pessoas`; pode reaparecer com novos registros, geridos em `/app/pessoas/[id]`. `timelineEvents` ganhou `status`/`datePrecision`/`note`; tags migraram de `personTags` para `eventTags`. Situação/tags "atuais" da pessoa = as do registro mais recente. Datas com precisão (dia/mês/ano/aproximada). Origem ganhou "Espontâneo" e "Não informado"
 - [x] Árvore cronológica como home (`/app`): estilo git tree — uma cor por pessoa (paleta fixa de 8 cores por hash do id), registros da mesma pessoa conectados por linha tracejada na cor dela (calculada no cliente via posição dos nós), nome + data + situação + tags visíveis, separadores de mês/ano, animação leve de entrada (respeita `prefers-reduced-motion`). Composer de registro rápido no topo (pessoa com autocomplete via `datalist` que cria na hora com origem "Não informado", data padrão hoje, situação, tags) — cadastro fluido, sem telas separadas
-- [ ] Importação de dados: entrada em massa dos registros existentes (tabela markdown/CSV já mantida pelo usuário → pessoas + primeiro registro + tags; unificar nomes de tags divergentes do seed)
+- [x] Importação de dados: entrada em massa dos registros existentes (tabela markdown/CSV já mantida pelo usuário → pessoas + primeiro registro + tags; unificar nomes de tags divergentes do seed)
 
 ### Pós-MVP
 

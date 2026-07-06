@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { parseAvatarDataUrl } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { people } from "@/lib/db/schema";
 import { personUpdateSchema } from "@/lib/validation/person";
@@ -17,7 +18,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!id) return NextResponse.json({ error: "Registro não encontrado." }, { status: 404 });
   const parsed = personUpdateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
-  const [person] = await db.update(people).set({ ...parsed.data, updatedAt: new Date() }).where(eq(people.id, id)).returning();
+  const { avatar, ...identity } = parsed.data;
+  let avatarFields;
+  try {
+    avatarFields = parseAvatarDataUrl(avatar);
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Foto inválida." }, { status: 400 });
+  }
+  const [person] = await db.update(people).set({ ...identity, ...avatarFields, updatedAt: new Date() }).where(eq(people.id, id)).returning();
   if (!person) return NextResponse.json({ error: "Registro não encontrado." }, { status: 404 });
   return NextResponse.json({ id: person.id });
 }
