@@ -45,22 +45,135 @@ Não há cadastro público. O usuário inicial é criado somente pela CLI. Após
 
 ## Deploy com PM2 e Caddy
 
-1. Instale dependências, configure `.env`, rode as migrações e crie o usuário.
-2. Execute `npm run build`.
-3. Copie `public` (quando existir) para `.next/standalone/public` e `.next/static` para `.next/standalone/.next/static`.
-4. Inicie com `pm2 start ecosystem.config.cjs` e salve com `pm2 save`.
-5. Adapte `Caddyfile.example` ao domínio, instale-o no Caddy e recarregue o serviço.
+Assume uma VM Oracle Linux (ou outra distro baseada em RHEL — comandos usam `dnf`/`firewalld`, ajuste se sua imagem for diferente) acessada via SSH.
 
-O Caddy fornece HTTPS automaticamente para um domínio público apontado para o servidor. Mantenha o processo Next.js ouvindo apenas em `127.0.0.1`.
+### 1. Preparar a VM (uma vez)
+
+```bash
+sudo dnf update -y
+sudo dnf install -y git 'dnf-command(copr)'
+
+# Ferramentas de build: o better-sqlite3 é um módulo nativo e pode precisar
+# compilar do zero durante o npm ci — principalmente em instâncias ARM
+# (Ampere A1, comum no free tier da Oracle), onde nem sempre há binário
+# pré-compilado disponível. Instale mesmo que sua instância seja x86.
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y python3
+
+# Node.js — escolha uma versão LTS (20 ou 22; evite versões "Current" como a
+# 24 em servidor, priorize estabilidade)
+curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo bash -
+sudo dnf install -y nodejs
+
+sudo npm install -g pm2
+```
+
+### 2. Obter o código
+
+Prefira `git clone`/`git pull`: garante que `node_modules` seja instalado direto na VM. Um `node_modules` copiado de outra máquina não funciona — o binário nativo do SQLite é específico de plataforma/arquitetura.
+
+```bash
+git clone <url-do-seu-repositorio-privado> linha-afetiva
+cd linha-afetiva
+```
+
+Sem um remote git, copie os arquivos com `rsync`, **excluindo `node_modules`, `.next` e `data`**:
+
+```bash
+rsync -av --exclude node_modules --exclude .next --exclude data ./ usuario@vm:/caminho/linha-afetiva/
+```
+
+### 3. Configurar
+
+```bash
+npm ci
+cp .env.example .env
+```
+
+Edite o `.env`: gere um `APP_SECRET` aleatório (`openssl rand -base64 32`) e confirme o `DATABASE_URL`. **Não** rode `npm ci --omit=dev` — o build do próximo passo precisa de `typescript`, `tailwindcss` e `drizzle-kit`, que são devDependencies.
+
+```bash
+npm run db:migrate
+npm run user:create
+```
+
+### 4. Build
+
+```bash
+npm run build
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+```
+
+Confira que o binário nativo do SQLite foi incluído no output standalone antes de seguir:
+
+```bash
+ls .next/standalone/node_modules/better-sqlite3/build/Release/
+```
+
+Se `better_sqlite3.node` não aparecer aí, o processo vai falhar ao subir — limpe e reinstale (`rm -rf node_modules && npm ci`) e rode o build de novo.
+
+### 5. PM2
+
+```bash
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup   # copie e rode o comando que ele imprimir, com sudo
+```
+
+`ecosystem.config.cjs` fixa `cwd` na raiz do projeto, então `data/linha-afetiva.db` resolve sempre no mesmo lugar onde as migrações rodaram, não importa de onde o `pm2 start` seja chamado.
+
+### 6. Firewall — dois níveis, os dois precisam estar liberados
+
+No console da Oracle Cloud: **VCN → Security List (ou NSG) da subnet** → regra de ingresso para as portas 80 e 443 (TCP), origem `0.0.0.0/0`. É fácil esquecer essa camada porque ela é separada do firewall do sistema operacional.
+
+Na própria VM (`firewalld`, ativo por padrão no Oracle Linux):
+
+```bash
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+```
+
+### 7. DNS
+
+Aponte o registro A do domínio para o IP público da VM **antes** do próximo passo — o Caddy tenta emitir o certificado Let's Encrypt assim que sobe, e isso falha (com retentativas) se o domínio ainda não resolver para a VM.
+
+### 8. Caddy
+
+```bash
+sudo dnf copr enable -y @caddy/caddy
+sudo dnf install -y caddy
+sudo cp Caddyfile.example /etc/caddy/Caddyfile
+sudo nano /etc/caddy/Caddyfile   # troque pelo seu domínio
+sudo systemctl enable --now caddy
+sudo systemctl reload caddy
+```
+
+O Caddy fornece HTTPS automaticamente para o domínio apontado para o servidor. Mantenha o processo Next.js ouvindo apenas em `127.0.0.1` (já configurado em `ecosystem.config.cjs`).
+
+### 9. Checagem final
+
+Acesse `https://seudominio.com`, faça login com o usuário criado no passo 3 e confirme que a árvore cronológica carrega.
+
+## Atualizando uma versão já publicada
+
+```bash
+git pull
+npm ci
+npm run db:migrate   # só se o schema mudou desde o último deploy
+npm run build
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+pm2 restart linha-afetiva
+```
 
 ## Estrutura atual
 
 - `src/app/login`: tela pública única
-- `src/app/app`: área privada e dashboard
-- `src/app/api/auth`: login e logout
+- `src/app/app`: área privada, dashboard/timeline, pessoas e tags
+- `src/app/api`: rotas de auth, pessoas, eventos e tags
 - `src/lib/auth`: JWT e sessão
 - `src/lib/db`: conexão Drizzle e schema
 - `src/lib/validation`: schemas Zod
-- `scripts`: migração e criação do usuário inicial
-
-As telas de pessoas, tags e importação pertencem à próxima etapa do MVP; as tabelas iniciais já estão modeladas para recebê-las.
+- `scripts`: migração, seed de tags, importação em massa, criação/reset de usuário
