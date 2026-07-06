@@ -174,28 +174,21 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
                   {showSeparator && <p className="relative z-10 ml-10 mt-6 mb-2 text-xs font-medium text-slate-400 first:mt-0 dark:text-slate-500">{monthKey}</p>}
                   <div className="tl-item grid grid-cols-[40px_minmax(0,1fr)]" style={{ animationDelay: `${Math.min(index, 12) * 0.03}s` }}>
                     <div className="flex justify-center pt-[14px]">
-                      {entry.avatarDataUrl ? (
-                        <span
-                          ref={(el) => {
-                            if (el) dotRefs.current.set(entry.id, el);
-                          }}
-                          aria-hidden
-                          className="relative z-10 block size-8 shrink-0 rounded-full p-[2px] ring-4 ring-white dark:ring-[#17121f]"
-                          style={{ backgroundColor: color }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <span
+                        ref={(el) => {
+                          if (el) dotRefs.current.set(entry.id, el);
+                        }}
+                        aria-hidden
+                        className="relative z-10 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full p-[2px] text-sm font-medium text-white ring-4 ring-white dark:ring-[#17121f]"
+                        style={{ backgroundColor: color }}
+                      >
+                        {entry.avatarDataUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img src={entry.avatarDataUrl} alt="" className="block h-full w-full rounded-full object-cover" />
-                        </span>
-                      ) : (
-                        <span
-                          ref={(el) => {
-                            if (el) dotRefs.current.set(entry.id, el);
-                          }}
-                          aria-hidden
-                          className="relative z-10 size-3 rounded-full ring-4 ring-white dark:ring-[#17121f]"
-                          style={{ backgroundColor: color }}
-                        />
-                      )}
+                        ) : (
+                          entry.personName.charAt(0).toUpperCase()
+                        )}
+                      </span>
                     </div>
                     <Link
                       href={`/app/pessoas/${entry.personId}`}
