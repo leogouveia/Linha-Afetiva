@@ -23,7 +23,19 @@ const errorClass = "rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:b
 const primaryButtonClass = "rounded-xl bg-violet-700 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-800 disabled:opacity-60";
 const ghostButtonClass = "rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-violet-50 dark:text-slate-400 dark:hover:bg-violet-950/60";
 
-function EventForm({ personId, event, allTags, onDone }: { personId: number; event?: PersonEvent; allTags: TagOption[]; onDone: () => void }) {
+function EventForm({
+  personId,
+  event,
+  allTags,
+  defaultTagIds = [],
+  onDone,
+}: {
+  personId: number;
+  event?: PersonEvent;
+  allTags: TagOption[];
+  defaultTagIds?: number[];
+  onDone: () => void;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -50,7 +62,7 @@ function EventForm({ personId, event, allTags, onDone }: { personId: number; eve
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <EventFields event={event} allTags={allTags} selectedTagIds={event?.tagIds} />
+      <EventFields event={event} allTags={allTags} selectedTagIds={event?.tagIds ?? defaultTagIds} />
       {error && <p role="alert" className={errorClass}>{error}</p>}
       <div className="flex gap-3">
         <button disabled={saving} className={primaryButtonClass}>{saving ? "Salvando…" : "Salvar registro"}</button>
@@ -159,7 +171,7 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
         </div>
         {adding && (
           <div className="mt-4 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
-            <EventForm personId={person.id} allTags={allTags} onDone={() => setAdding(false)} />
+            <EventForm personId={person.id} allTags={allTags} defaultTagIds={events[0]?.tagIds ?? []} onDone={() => setAdding(false)} />
           </div>
         )}
         <ul className="mt-4 space-y-3">

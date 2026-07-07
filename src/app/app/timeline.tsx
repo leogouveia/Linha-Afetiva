@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { statusBadgeClass } from "@/components/status-badge";
+import { PersonAutocomplete } from "@/components/person-autocomplete";
 import { TagMultiSelect } from "@/components/tag-select";
 import { formatEventDate, formatMonthYear } from "@/lib/dates";
 import { getPersonColor } from "@/lib/colors";
@@ -31,7 +32,15 @@ function todayInput() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOption[] }) {
+function Composer({
+  people,
+  allTags,
+  latestTagsByPersonId,
+}: {
+  people: PersonOption[];
+  allTags: TagOption[];
+  latestTagsByPersonId: Map<number, number[]>;
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [date, setDate] = useState(todayInput);
@@ -39,6 +48,12 @@ function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOpt
   const [tagIds, setTagIds] = useState<number[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  function onNameChange(value: string) {
+    setName(value);
+    const existing = people.find((person) => person.name.trim().toLowerCase() === value.trim().toLowerCase());
+    setTagIds(existing ? (latestTagsByPersonId.get(existing.id) ?? []) : []);
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,19 +89,7 @@ function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOpt
   return (
     <form onSubmit={submit} className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
       <div className="flex flex-wrap gap-2">
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          list="timeline-people"
-          placeholder="Pessoa"
-          required
-          className={`min-w-[10rem] flex-1 ${inputClass}`}
-        />
-        <datalist id="timeline-people">
-          {people.map((person) => (
-            <option key={person.id} value={person.name} />
-          ))}
-        </datalist>
+        <PersonAutocomplete people={people} value={name} onChange={onNameChange} placeholder="Pessoa" />
         <input type="date" value={date} onChange={(event) => setDate(event.target.value)} required className={inputClass} />
         <select value={status} onChange={(event) => setStatus(event.target.value as EventStatus)} className={inputClass}>
           {eventStatuses.map((value) => (
@@ -113,6 +116,14 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
   const containerRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef(new Map<number, HTMLSpanElement>());
   const [segments, setSegments] = useState<Segment[]>([]);
+  const latestTagsByPersonId = new Map<number, number[]>();
+  for (const entry of entries) {
+    if (!latestTagsByPersonId.has(entry.personId))
+      latestTagsByPersonId.set(
+        entry.personId,
+        entry.tags.map((tag) => tag.id),
+      );
+  }
 
   const multiEventPersonIds = [...new Set(entries.map((entry) => entry.personId))].filter(
     (id) => entries.filter((entry) => entry.personId === id).length > 1
@@ -147,7 +158,7 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
 
   return (
     <div>
-      <Composer people={people} allTags={allTags} />
+      <Composer people={people} allTags={allTags} latestTagsByPersonId={latestTagsByPersonId} />
       {entries.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-dashed border-violet-200 p-10 text-center text-slate-500 dark:border-violet-900 dark:text-slate-400">
           Nenhum registro ainda. Use o campo acima para começar.
