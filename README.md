@@ -168,6 +168,27 @@ cp -r .next/static .next/standalone/.next/static
 pm2 restart linha-afetiva
 ```
 
+## Modelo de dados: pessoa, evento e tags
+
+Uma **pessoa** é a identidade (nome, origem, foto) mais um resumo da relação: `currentStatus`, início/término, como terminou e notas gerais — campos editados diretamente na tela da pessoa, não derivados automaticamente (exceto `currentStatus`, ver abaixo).
+
+Um **registro (evento)** é um acontecimento específico: data, título, tipo, canal, local, tom emocional, resultado e status depois do evento. Cada pessoa acumula vários registros ao longo do tempo.
+
+**Tags têm escopo**: `relationship` (explicam a dinâmica da pessoa, ex. `potencial-relacionamento`), `event` (explicam o acontecimento, ex. `briga`), ou `both` quando o escopo não é óbvio. Tags de relação ficam em `personTags`; tags de evento ficam em `eventTags` — são independentes, a mesma tag pode aparecer nas duas se o escopo for `both`.
+
+**Sincronização de status**: ao salvar um evento (criar ou editar), se o status escolhido não for "Indefinido", `people.currentStatus` é atualizado com esse valor. Deixar "Indefinido" nunca altera o status atual da pessoa. Não há verificação de "é o evento mais recente" nem reversão ao excluir um evento — regra deliberadamente simples.
+
+Essa separação (pessoa/evento/tags) substituiu um modelo anterior onde tudo — status, tags, notas — vivia só no evento. A migração que fez essa transição (`scripts/migrate-relationship-model.ts`) roda uma vez, é idempotente, e:
+- Classifica as tags já existentes por escopo (lista fixa de tags conhecidamente de relação/evento; o resto cai em `both`).
+- Copia as tags do registro mais recente de cada pessoa para `personTags`, só para preservar o "resumo" que já existia.
+- Preenche `currentStatus` de cada pessoa com o status do registro mais recente.
+
+Ao atualizar um deploy já publicado que ainda não passou por essa mudança, rode uma vez após `npm run db:migrate`:
+
+```bash
+npm run db:migrate-relationship-model
+```
+
 ## Estrutura atual
 
 - `src/app/login`: tela pública única
@@ -176,4 +197,4 @@ pm2 restart linha-afetiva
 - `src/lib/auth`: JWT e sessão
 - `src/lib/db`: conexão Drizzle e schema
 - `src/lib/validation`: schemas Zod
-- `scripts`: migração, seed de tags, importação em massa, criação/reset de usuário
+- `scripts`: migração, migração do modelo pessoa/evento, seed de tags, importação em massa, criação/reset de usuário

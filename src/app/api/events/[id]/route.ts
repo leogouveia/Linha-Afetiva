@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { eventTags, timelineEvents } from "@/lib/db/schema";
+import { syncPersonStatus } from "@/lib/status-sync";
 import { eventFieldsSchema } from "@/lib/validation/event";
 
 async function resolveId(params: Promise<{ id: string }>) {
@@ -22,14 +23,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const event = db.transaction((tx) => {
       const updated = tx
         .update(timelineEvents)
-        .set({ date: data.date, datePrecision: data.datePrecision, status: data.status, note: data.note ?? null, updatedAt: new Date() })
+        .set({
+          date: data.date,
+          datePrecision: data.datePrecision,
+          title: data.title,
+          description: data.description ?? null,
+          eventType: data.eventType ?? null,
+          channel: data.channel ?? null,
+          locationType: data.locationType ?? null,
+          emotionalTone: data.emotionalTone ?? null,
+          outcome: data.outcome ?? null,
+          status: data.status,
+          updatedAt: new Date(),
+        })
         .where(eq(timelineEvents.id, id))
         .returning()
         .get();
       if (!updated) return null;
       tx.delete(eventTags).where(eq(eventTags.eventId, id)).run();
-      if (data.tagIds.length > 0)
-        tx.insert(eventTags).values(data.tagIds.map((tagId) => ({ eventId: id, tagId }))).run();
+      if (data.tagIds.length > 0) tx.insert(eventTags).values(data.tagIds.map((tagId) => ({ eventId: id, tagId }))).run();
+      syncPersonStatus(tx, updated.personId, data.status);
       return updated;
     });
     if (!event) return NextResponse.json({ error: "Registro não encontrado." }, { status: 404 });

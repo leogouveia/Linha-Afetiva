@@ -1,18 +1,32 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import type { TagScope } from "@/lib/validation/tag";
 
-export type TagOption = { id: number; name: string; color: string };
+export type TagOption = { id: number; name: string; color: string; scope: TagScope };
+
+export function relationshipScopeTags<T extends { scope: TagScope }>(tags: T[]) {
+  return tags.filter((tag) => tag.scope === "relationship" || tag.scope === "both");
+}
+
+export function eventScopeTags<T extends { scope: TagScope }>(tags: T[]) {
+  return tags.filter((tag) => tag.scope === "event" || tag.scope === "both");
+}
 
 // Combobox with removable chips + filterable dropdown, replacing a flat list of
 // tag checkboxes now that the tag palette has grown too large to scan at a glance.
 export function TagMultiSelect({
   options,
+  dropdownOptions,
   value,
   onChange,
   name,
   placeholder = "Tags",
 }: {
   options: TagOption[];
+  /** Tags offered in the "add new" dropdown; defaults to `options`. Lets a picker scoped to one
+   * kind of tag (e.g. only event-scope) still display and let the user remove an already-attached
+   * tag of a different scope, instead of hiding it invisibly. */
+  dropdownOptions?: TagOption[];
   value: number[];
   onChange: (ids: number[]) => void;
   name?: string;
@@ -34,7 +48,7 @@ export function TagMultiSelect({
   }, []);
 
   const selected = options.filter((tag) => value.includes(tag.id));
-  const available = options.filter((tag) => !value.includes(tag.id) && tag.name.toLowerCase().includes(query.toLowerCase()));
+  const available = (dropdownOptions ?? options).filter((tag) => !value.includes(tag.id) && tag.name.toLowerCase().includes(query.toLowerCase()));
 
   function add(id: number) {
     onChange([...value, id]);

@@ -5,7 +5,7 @@ import { TagManager } from "./tag-manager";
 
 export default async function TagsPage() {
   const rows = await db
-    .select({ id: tags.id, name: tags.name, color: tags.color, uses: count(eventTags.eventId) })
+    .select({ id: tags.id, name: tags.name, label: tags.label, scope: tags.scope, color: tags.color, uses: count(eventTags.eventId) })
     .from(tags)
     .leftJoin(eventTags, eq(tags.id, eventTags.tagId))
     .groupBy(tags.id)

@@ -4,13 +4,13 @@ import { FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { statusBadgeClass } from "@/components/status-badge";
 import { PersonAutocomplete } from "@/components/person-autocomplete";
-import { TagMultiSelect } from "@/components/tag-select";
+import { eventScopeTags, TagMultiSelect, type TagOption } from "@/components/tag-select";
 import { formatEventDate, formatMonthYear } from "@/lib/dates";
 import { getPersonColor } from "@/lib/colors";
-import { eventStatusLabels, eventStatuses, type EventStatus } from "@/lib/validation/event";
+import { emotionalToneLabels, eventStatusLabels, eventStatuses, outcomeLabels, type EmotionalTone, type EventStatus, type Outcome } from "@/lib/validation/event";
 
 export type PersonOption = { id: number; name: string };
-export type TagOption = { id: number; name: string; color: string };
+export type { TagOption };
 export type TimelineEntry = {
   id: number;
   personId: number;
@@ -19,6 +19,9 @@ export type TimelineEntry = {
   date: Date;
   datePrecision: string;
   status: string;
+  title: string | null;
+  outcome: string | null;
+  emotionalTone: string | null;
   tags: TagOption[];
 };
 
@@ -32,42 +35,35 @@ function todayInput() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function Composer({
-  people,
-  allTags,
-  latestTagsByPersonId,
-}: {
-  people: PersonOption[];
-  allTags: TagOption[];
-  latestTagsByPersonId: Map<number, number[]>;
-}) {
+function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOption[] }) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [date, setDate] = useState(todayInput);
-  const [status, setStatus] = useState<EventStatus>("active");
+  const [status, setStatus] = useState<EventStatus>("undefined");
   const [tagIds, setTagIds] = useState<number[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-
-  function onNameChange(value: string) {
-    setName(value);
-    const existing = people.find((person) => person.name.trim().toLowerCase() === value.trim().toLowerCase());
-    setTagIds(existing ? (latestTagsByPersonId.get(existing.id) ?? []) : []);
-  }
+  const dropdownOptions = eventScopeTags(allTags);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     const trimmedName = name.trim();
+    const trimmedTitle = title.trim();
     if (!trimmedName) {
       setError("Informe o nome da pessoa.");
+      return;
+    }
+    if (!trimmedTitle) {
+      setError("Informe o título do registro.");
       return;
     }
     setSaving(true);
     const existing = people.find((person) => person.name.trim().toLowerCase() === trimmedName.toLowerCase());
     const body = existing
-      ? { personId: existing.id, date, datePrecision: "day", status, tagIds }
-      : { name: trimmedName, origin: "Não informado", date, datePrecision: "day", status, tagIds };
+      ? { personId: existing.id, date, datePrecision: "day", title: trimmedTitle, status, tagIds }
+      : { name: trimmedName, origin: "Não informado", date, datePrecision: "day", title: trimmedTitle, status, tagIds };
     const response = await fetch(existing ? "/api/events" : "/api/people", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -80,7 +76,8 @@ function Composer({
       return;
     }
     setName("");
-    setStatus("active");
+    setTitle("");
+    setStatus("undefined");
     setTagIds([]);
     setDate(todayInput());
     router.refresh();
@@ -89,8 +86,16 @@ function Composer({
   return (
     <form onSubmit={submit} className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
       <div className="flex flex-wrap gap-2">
-        <PersonAutocomplete people={people} value={name} onChange={onNameChange} placeholder="Pessoa" />
+        <PersonAutocomplete people={people} value={name} onChange={setName} placeholder="Pessoa" />
         <input type="date" value={date} onChange={(event) => setDate(event.target.value)} required className={inputClass} />
+        <input
+          type="text"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Título do registro"
+          maxLength={200}
+          className={`${inputClass} min-w-[10rem] flex-1`}
+        />
         <select value={status} onChange={(event) => setStatus(event.target.value as EventStatus)} className={inputClass}>
           {eventStatuses.map((value) => (
             <option key={value} value={value}>
@@ -104,7 +109,7 @@ function Composer({
       </div>
       {allTags.length > 0 && (
         <div className="mt-3">
-          <TagMultiSelect options={allTags} value={tagIds} onChange={setTagIds} placeholder="Tags" />
+          <TagMultiSelect options={allTags} dropdownOptions={dropdownOptions} value={tagIds} onChange={setTagIds} placeholder="Tags do evento" />
         </div>
       )}
       {error && <p role="alert" className="mt-3 rounded-xl bg-rose-50 px-4 py-2.5 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
@@ -116,14 +121,6 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
   const containerRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef(new Map<number, HTMLSpanElement>());
   const [segments, setSegments] = useState<Segment[]>([]);
-  const latestTagsByPersonId = new Map<number, number[]>();
-  for (const entry of entries) {
-    if (!latestTagsByPersonId.has(entry.personId))
-      latestTagsByPersonId.set(
-        entry.personId,
-        entry.tags.map((tag) => tag.id),
-      );
-  }
 
   const multiEventPersonIds = [...new Set(entries.map((entry) => entry.personId))].filter(
     (id) => entries.filter((entry) => entry.personId === id).length > 1
@@ -158,7 +155,7 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
 
   return (
     <div>
-      <Composer people={people} allTags={allTags} latestTagsByPersonId={latestTagsByPersonId} />
+      <Composer people={people} allTags={allTags} />
       {entries.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-dashed border-violet-200 p-10 text-center text-slate-500 dark:border-violet-900 dark:text-slate-400">
           Nenhum registro ainda. Use o campo acima para começar.
@@ -179,6 +176,8 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
               const showSeparator = monthKey !== lastMonthKey;
               lastMonthKey = monthKey;
               const status = entry.status as EventStatus;
+              const outcome = entry.outcome as Outcome | null;
+              const emotionalTone = entry.emotionalTone as EmotionalTone | null;
               const color = getPersonColor(entry.personId);
               return (
                 <li key={entry.id}>
@@ -207,11 +206,20 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium text-violet-950 dark:text-violet-100">{entry.personName}</span>
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass[status] ?? statusBadgeClass.ended}`}>
-                          {eventStatusLabels[status] ?? entry.status}
-                        </span>
+                        {status !== "undefined" && (
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass[status] ?? statusBadgeClass.ended}`}>
+                            {eventStatusLabels[status] ?? entry.status}
+                          </span>
+                        )}
                         <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{formatEventDate(entry.date, entry.datePrecision)}</span>
                       </div>
+                      {entry.title && <p className="mt-1.5 text-sm font-medium text-violet-800 dark:text-violet-200">{entry.title}</p>}
+                      {(outcome || emotionalTone) && (
+                        <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                          {outcome && <span>Resultado: {outcomeLabels[outcome]}</span>}
+                          {emotionalTone && <span>Tom: {emotionalToneLabels[emotionalTone]}</span>}
+                        </div>
+                      )}
                       {entry.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {entry.tags.map((tag) => (

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { toAvatarDataUrl } from "@/lib/avatar";
 import { db } from "@/lib/db";
-import { eventTags, people, tags, timelineEvents } from "@/lib/db/schema";
+import { eventTags, people, personTags, timelineEvents } from "@/lib/db/schema";
+import { loadTagOptions } from "@/lib/tags";
 import { PersonDetail } from "./person-detail";
 
 export default async function PersonPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,13 +21,20 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
   const links = events.length
     ? await db.select().from(eventTags).where(inArray(eventTags.eventId, events.map((event) => event.id)))
     : [];
-  const allTags = await db.select({ id: tags.id, name: tags.name, color: tags.color }).from(tags).orderBy(asc(tags.name));
+  const relationshipTagLinks = await db.select({ tagId: personTags.tagId }).from(personTags).where(eq(personTags.personId, numericId));
+  const allTags = await loadTagOptions();
   const eventsWithTags = events.map((event) => ({
     id: event.id,
     date: event.date,
     datePrecision: event.datePrecision,
+    title: event.title,
+    description: event.description,
+    eventType: event.eventType,
+    channel: event.channel,
+    locationType: event.locationType,
+    emotionalTone: event.emotionalTone,
+    outcome: event.outcome,
     status: event.status,
-    note: event.note,
     tagIds: links.filter((link) => link.eventId === event.id).map((link) => link.tagId),
   }));
   return (
@@ -35,7 +43,18 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-violet-950 dark:text-violet-100">{person.name}</h1>
       <div className="mt-8">
         <PersonDetail
-          person={{ id: person.id, name: person.name, origin: person.origin, avatarDataUrl: toAvatarDataUrl(person.avatar, person.avatarType) }}
+          person={{
+            id: person.id,
+            name: person.name,
+            origin: person.origin,
+            avatarDataUrl: toAvatarDataUrl(person.avatar, person.avatarType),
+            currentStatus: person.currentStatus,
+            startedAt: person.startedAt,
+            endedAt: person.endedAt,
+            howEnded: person.howEnded,
+            generalNotes: person.generalNotes,
+            relationshipTagIds: relationshipTagLinks.map((link) => link.tagId),
+          }}
           events={eventsWithTags}
           allTags={allTags}
         />

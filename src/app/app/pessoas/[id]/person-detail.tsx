@@ -2,40 +2,33 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AvatarInput } from "@/components/avatar-input";
-import { collectEventPayload, EventFields, inputClass, labelClass, type TagOption } from "@/components/event-fields";
+import { collectEventPayload, EventFields, inputClass, labelClass, toDateInput, type EventDefaults, type TagOption } from "@/components/event-fields";
 import { statusBadgeClass } from "@/components/status-badge";
+import { relationshipScopeTags, TagMultiSelect } from "@/components/tag-select";
 import { getPersonColor } from "@/lib/colors";
 import { formatEventDate } from "@/lib/dates";
-import { eventStatusLabels, type EventStatus } from "@/lib/validation/event";
+import { channelLabels, emotionalToneLabels, eventStatusLabels, eventStatuses, eventTypeLabels, locationTypeLabels, outcomeLabels, type Channel, type EmotionalTone, type EventStatus, type EventType, type LocationType, type Outcome } from "@/lib/validation/event";
 import { personOrigins } from "@/lib/validation/person";
 
-export type PersonIdentity = { id: number; name: string; origin: string; avatarDataUrl: string | null };
-export type PersonEvent = {
+export type PersonIdentity = {
   id: number;
-  date: Date;
-  datePrecision: string;
-  status: string;
-  note: string | null;
-  tagIds: number[];
+  name: string;
+  origin: string;
+  avatarDataUrl: string | null;
+  currentStatus: string;
+  startedAt: Date | null;
+  endedAt: Date | null;
+  howEnded: string | null;
+  generalNotes: string | null;
+  relationshipTagIds: number[];
 };
+export type PersonEvent = EventDefaults & { id: number; tagIds: number[] };
 
 const errorClass = "rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300";
 const primaryButtonClass = "rounded-xl bg-violet-700 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-800 disabled:opacity-60";
 const ghostButtonClass = "rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-violet-50 dark:text-slate-400 dark:hover:bg-violet-950/60";
 
-function EventForm({
-  personId,
-  event,
-  allTags,
-  defaultTagIds = [],
-  onDone,
-}: {
-  personId: number;
-  event?: PersonEvent;
-  allTags: TagOption[];
-  defaultTagIds?: number[];
-  onDone: () => void;
-}) {
+function EventForm({ personId, event, allTags, onDone }: { personId: number; event?: PersonEvent; allTags: TagOption[]; onDone: () => void }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -62,7 +55,7 @@ function EventForm({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <EventFields event={event} allTags={allTags} selectedTagIds={event?.tagIds ?? defaultTagIds} />
+      <EventFields event={event} allTags={allTags} selectedTagIds={event?.tagIds ?? []} />
       {error && <p role="alert" className={errorClass}>{error}</p>}
       <div className="flex gap-3">
         <button disabled={saving} className={primaryButtonClass}>{saving ? "Salvando…" : "Salvar registro"}</button>
@@ -79,7 +72,9 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
   const [deleting, setDeleting] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [relationshipTagIds, setRelationshipTagIds] = useState(person.relationshipTagIds);
   const tagById = new Map(allTags.map((tag) => [tag.id, tag]));
+  const relationshipDropdownOptions = relationshipScopeTags(allTags);
 
   async function saveIdentity(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
@@ -89,7 +84,17 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
     const response = await fetch(`/api/people/${person.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.get("name"), origin: form.get("origin"), avatar: form.get("avatar") || null }),
+      body: JSON.stringify({
+        name: form.get("name"),
+        origin: form.get("origin"),
+        avatar: form.get("avatar") || null,
+        currentStatus: form.get("currentStatus"),
+        startedAt: form.get("startedAt") || "",
+        endedAt: form.get("endedAt") || "",
+        howEnded: form.get("howEnded") || "",
+        generalNotes: form.get("generalNotes") || "",
+        relationshipTagIds: form.getAll("relationshipTags").map(Number),
+      }),
     });
     setSavingIdentity(false);
     if (!response.ok) {
@@ -129,7 +134,7 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
 
   return (
     <div className="space-y-10">
-      <form onSubmit={saveIdentity} className="space-y-5 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
+      <form onSubmit={saveIdentity} className="space-y-6 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
         <AvatarInput name="avatar" initialDataUrl={person.avatarDataUrl} ringColor={getPersonColor(person.id)} />
         <div className="grid gap-5 sm:grid-cols-2">
           <label className={labelClass}>
@@ -148,6 +153,54 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
             </select>
           </label>
         </div>
+
+        <div className="border-t border-violet-100 pt-5 dark:border-violet-950">
+          <h2 className="text-sm font-semibold text-violet-950 dark:text-violet-100">Status atual</h2>
+          <div className="mt-4 grid gap-5 sm:grid-cols-3">
+            <label className={labelClass}>
+              Situação
+              <select name="currentStatus" defaultValue={person.currentStatus} className={inputClass}>
+                {eventStatuses.map((value) => (
+                  <option key={value} value={value}>
+                    {eventStatusLabels[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={labelClass}>
+              Início
+              <input name="startedAt" type="date" defaultValue={toDateInput(person.startedAt)} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              Término
+              <input name="endedAt" type="date" defaultValue={toDateInput(person.endedAt)} className={inputClass} />
+            </label>
+          </div>
+          <label className={`${labelClass} mt-5 block`}>
+            Como terminou
+            <input name="howEnded" defaultValue={person.howEnded ?? ""} placeholder="Opcional" className={inputClass} />
+          </label>
+          <label className={`${labelClass} mt-5 block`}>
+            Notas gerais
+            <textarea name="generalNotes" rows={3} defaultValue={person.generalNotes ?? ""} placeholder="Opcional" className={inputClass} />
+          </label>
+        </div>
+
+        <div className="border-t border-violet-100 pt-5 dark:border-violet-950">
+          <h2 className="text-sm font-semibold text-violet-950 dark:text-violet-100">Tags de relação</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Descrevem a dinâmica geral, não um acontecimento específico.</p>
+          <div className="mt-3">
+            <TagMultiSelect
+              options={allTags}
+              dropdownOptions={relationshipDropdownOptions}
+              value={relationshipTagIds}
+              onChange={setRelationshipTagIds}
+              name="relationshipTags"
+              placeholder="Buscar tags de relação…"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button disabled={savingIdentity || deleting} className={primaryButtonClass}>
             {savingIdentity ? "Salvando…" : "Salvar"}
@@ -171,12 +224,18 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
         </div>
         {adding && (
           <div className="mt-4 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
-            <EventForm personId={person.id} allTags={allTags} defaultTagIds={events[0]?.tagIds ?? []} onDone={() => setAdding(false)} />
+            <EventForm personId={person.id} allTags={allTags} onDone={() => setAdding(false)} />
           </div>
         )}
         <ul className="mt-4 space-y-3">
           {events.map((event) => {
             const status = event.status as EventStatus;
+            const eventType = event.eventType as EventType | null;
+            const channel = event.channel as Channel | null;
+            const locationType = event.locationType as LocationType | null;
+            const emotionalTone = event.emotionalTone as EmotionalTone | null;
+            const outcome = event.outcome as Outcome | null;
+            const context = [eventType && eventTypeLabels[eventType], channel && channelLabels[channel], locationType && locationTypeLabels[locationType]].filter(Boolean);
             return (
               <li key={event.id} className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-950 dark:bg-[#1d1728]">
                 {editingEventId === event.id ? (
@@ -185,9 +244,11 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
                   <>
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="font-medium text-violet-950 dark:text-violet-100">{formatEventDate(event.date, event.datePrecision)}</span>
-                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[status] ?? statusBadgeClass.ended}`}>
-                        {eventStatusLabels[status] ?? event.status}
-                      </span>
+                      {status !== "undefined" && (
+                        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[status] ?? statusBadgeClass.ended}`}>
+                          {eventStatusLabels[status] ?? event.status}
+                        </span>
+                      )}
                       <span className="ml-auto flex gap-1">
                         <button type="button" onClick={() => { setEditingEventId(event.id); setAdding(false); }} className="rounded-lg px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/60">
                           Editar
@@ -197,6 +258,14 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
                         </button>
                       </span>
                     </div>
+                    {event.title && <p className="mt-1.5 font-medium text-violet-900 dark:text-violet-200">{event.title}</p>}
+                    {context.length > 0 && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{context.join(" · ")}</p>}
+                    {(outcome || emotionalTone) && (
+                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        {outcome && <span>Resultado: {outcomeLabels[outcome]}</span>}
+                        {emotionalTone && <span>Tom: {emotionalToneLabels[emotionalTone]}</span>}
+                      </div>
+                    )}
                     {event.tagIds.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {event.tagIds.map((tagId) => {
@@ -211,7 +280,7 @@ export function PersonDetail({ person, events, allTags }: { person: PersonIdenti
                         })}
                       </div>
                     )}
-                    {event.note && <p className="mt-3 whitespace-pre-line text-sm text-slate-600 dark:text-slate-400">{event.note}</p>}
+                    {event.description && <p className="mt-3 whitespace-pre-line text-sm text-slate-600 dark:text-slate-400">{event.description}</p>}
                   </>
                 )}
               </li>

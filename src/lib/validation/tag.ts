@@ -11,8 +11,21 @@ export const tagColors = [
   "#64748b", // slate
 ] as const;
 
+export const tagScopes = ["relationship", "event", "both"] as const;
+export type TagScope = (typeof tagScopes)[number];
+
+export const tagScopeLabels: Record<TagScope, string> = {
+  relationship: "Pessoa (dinâmica)",
+  event: "Evento (acontecimento)",
+  both: "Ambos",
+};
+
+const emptyToUndefined = (value: unknown) => (value === "" || value === null ? undefined : value);
+
 export const tagSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome da tag.").max(50, "Nome muito longo."),
+  label: z.preprocess(emptyToUndefined, z.string().trim().max(80, "Nome de exibição muito longo.").optional()),
+  scope: z.enum(tagScopes, { error: "Escopo inválido." }),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida."),
 });
 

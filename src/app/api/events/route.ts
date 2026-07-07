@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { eventTags, people, timelineEvents } from "@/lib/db/schema";
+import { syncPersonStatus } from "@/lib/status-sync";
 import { eventSchema } from "@/lib/validation/event";
 
 export async function POST(request: Request) {
@@ -16,11 +17,23 @@ export async function POST(request: Request) {
     const event = db.transaction((tx) => {
       const created = tx
         .insert(timelineEvents)
-        .values({ personId: data.personId, date: data.date, datePrecision: data.datePrecision, status: data.status, note: data.note ?? null })
+        .values({
+          personId: data.personId,
+          date: data.date,
+          datePrecision: data.datePrecision,
+          title: data.title,
+          description: data.description ?? null,
+          eventType: data.eventType ?? null,
+          channel: data.channel ?? null,
+          locationType: data.locationType ?? null,
+          emotionalTone: data.emotionalTone ?? null,
+          outcome: data.outcome ?? null,
+          status: data.status,
+        })
         .returning()
         .get();
-      if (data.tagIds.length > 0)
-        tx.insert(eventTags).values(data.tagIds.map((tagId) => ({ eventId: created.id, tagId }))).run();
+      if (data.tagIds.length > 0) tx.insert(eventTags).values(data.tagIds.map((tagId) => ({ eventId: created.id, tagId }))).run();
+      syncPersonStatus(tx, data.personId, data.status);
       return created;
     });
     return NextResponse.json({ id: event.id }, { status: 201 });

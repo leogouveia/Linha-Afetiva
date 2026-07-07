@@ -18,7 +18,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const parsed = tagSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
   try {
-    const [tag] = await db.update(tags).set(parsed.data).where(eq(tags.id, id)).returning();
+    const [tag] = await db.update(tags).set({ ...parsed.data, updatedAt: new Date() }).where(eq(tags.id, id)).returning();
     if (!tag) return NextResponse.json({ error: "Tag não encontrada." }, { status: 404 });
     return NextResponse.json({ id: tag.id });
   } catch (error) {

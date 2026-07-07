@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { asc } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { tags } from "@/lib/db/schema";
+import { loadTagOptions } from "@/lib/tags";
 import { PersonForm } from "../person-form";
 
 export default async function NewPersonPage() {
-  const allTags = await db.select({ id: tags.id, name: tags.name, color: tags.color }).from(tags).orderBy(asc(tags.name));
+  const allTags = await loadTagOptions();
   return (
     <div className="mx-auto max-w-2xl">
       <Link href="/app/pessoas" className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400">← Pessoas</Link>

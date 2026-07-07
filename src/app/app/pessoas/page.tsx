@@ -1,32 +1,33 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { desc, inArray } from "drizzle-orm";
 import { statusBadgeClass } from "@/components/status-badge";
 import { toAvatarDataUrl } from "@/lib/avatar";
 import { getPersonColor } from "@/lib/colors";
 import { formatEventDate } from "@/lib/dates";
 import { db } from "@/lib/db";
-import { eventTags, people, tags, timelineEvents } from "@/lib/db/schema";
+import { people, personTags, timelineEvents } from "@/lib/db/schema";
+import { loadTagOptions } from "@/lib/tags";
 import { eventStatusLabels, type EventStatus } from "@/lib/validation/event";
 
-type LatestEvent = { id: number; date: Date; datePrecision: string; status: string; tags: { name: string; color: string }[] };
+type LatestEvent = { date: Date; datePrecision: string };
 
 export default async function PeoplePage() {
   const rows = await db.select().from(people);
   const events = await db
-    .select({ id: timelineEvents.id, personId: timelineEvents.personId, date: timelineEvents.date, datePrecision: timelineEvents.datePrecision, status: timelineEvents.status })
+    .select({ id: timelineEvents.id, personId: timelineEvents.personId, date: timelineEvents.date, datePrecision: timelineEvents.datePrecision })
     .from(timelineEvents)
     .orderBy(desc(timelineEvents.date), desc(timelineEvents.id));
-  const links = await db
-    .select({ eventId: eventTags.eventId, name: tags.name, color: tags.color })
-    .from(eventTags)
-    .innerJoin(tags, eq(eventTags.tagId, tags.id));
+  const allTags = await loadTagOptions();
+  const tagById = new Map(allTags.map((tag) => [tag.id, tag]));
+  const relationshipLinks = rows.length
+    ? await db.select({ personId: personTags.personId, tagId: personTags.tagId }).from(personTags).where(inArray(personTags.personId, rows.map((person) => person.id)))
+    : [];
 
   const latestByPerson = new Map<number, LatestEvent>();
   const countByPerson = new Map<number, number>();
   for (const event of events) {
     countByPerson.set(event.personId, (countByPerson.get(event.personId) ?? 0) + 1);
-    if (!latestByPerson.has(event.personId))
-      latestByPerson.set(event.personId, { ...event, tags: links.filter((link) => link.eventId === event.id).map((link) => ({ name: link.name, color: link.color })) });
+    if (!latestByPerson.has(event.personId)) latestByPerson.set(event.personId, { date: event.date, datePrecision: event.datePrecision });
   }
   const sorted = [...rows].sort((a, b) => (latestByPerson.get(b.id)?.date.getTime() ?? 0) - (latestByPerson.get(a.id)?.date.getTime() ?? 0));
 
@@ -49,8 +50,12 @@ export default async function PeoplePage() {
         <ul className="mt-8 space-y-3">
           {sorted.map((person) => {
             const latest = latestByPerson.get(person.id);
-            const status = (latest?.status ?? "ended") as EventStatus;
+            const status = person.currentStatus as EventStatus;
             const eventCount = countByPerson.get(person.id) ?? 0;
+            const relationshipTags = relationshipLinks
+              .filter((link) => link.personId === person.id)
+              .map((link) => tagById.get(link.tagId))
+              .filter((tag) => tag !== undefined);
             return (
               <li key={person.id}>
                 <Link
@@ -73,9 +78,9 @@ export default async function PeoplePage() {
                       </span>
                       <span className="font-medium text-violet-950 dark:text-violet-100">{person.name}</span>
                     </span>
-                    {latest && (
+                    {status !== "undefined" && (
                       <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[status] ?? statusBadgeClass.ended}`}>
-                        {eventStatusLabels[status] ?? latest.status}
+                        {eventStatusLabels[status] ?? person.currentStatus}
                       </span>
                     )}
                   </div>
@@ -84,10 +89,10 @@ export default async function PeoplePage() {
                     {latest ? ` · ${formatEventDate(latest.date, latest.datePrecision)}` : ""}
                     {eventCount > 1 ? ` · ${eventCount} registros` : ""}
                   </p>
-                  {latest && latest.tags.length > 0 && (
+                  {relationshipTags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
-                      {latest.tags.map((tag) => (
-                        <span key={tag.name} className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-900 dark:bg-violet-950/50 dark:text-violet-200">
+                      {relationshipTags.map((tag) => (
+                        <span key={tag.id} className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-900 dark:bg-violet-950/50 dark:text-violet-200">
                           <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: tag.color }} />
                           {tag.name}
                         </span>
