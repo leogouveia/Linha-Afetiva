@@ -159,14 +159,16 @@ Acesse `https://seudominio.com`, faça login com o usuário criado no passo 3 e 
 ## Atualizando uma versão já publicada
 
 ```bash
-git pull
-npm ci
-npm run db:migrate   # só se o schema mudou desde o último deploy
-npm run build
-cp -r public .next/standalone/public
-cp -r .next/static .next/standalone/.next/static
-pm2 restart linha-afetiva
+./scripts/deploy.sh --git-pull
 ```
+
+Ou, se o código já estiver atualizado:
+
+```bash
+./scripts/deploy.sh
+```
+
+O script instala dependências com pnpm, aplica migrações do schema (`db:migrate`), roda a migração idempotente do modelo de relacionamento (`db:migrate-relationship-model`), faz o build standalone e reinicia o PM2.
 
 ## Modelo de dados: pessoa, evento e tags
 
@@ -183,10 +185,10 @@ Essa separação (pessoa/evento/tags) substituiu um modelo anterior onde tudo �
 - Copia as tags do registro mais recente de cada pessoa para `personTags`, só para preservar o "resumo" que já existia.
 - Preenche `currentStatus` de cada pessoa com o status do registro mais recente.
 
-Ao atualizar um deploy já publicado que ainda não passou por essa mudança, rode uma vez após `npm run db:migrate`:
+Ao atualizar um deploy já publicado que ainda não passou por essa mudança, o `scripts/deploy.sh` já executa isso automaticamente após `db:migrate`. Para rodar manualmente:
 
 ```bash
-npm run db:migrate-relationship-model
+pnpm run db:migrate-relationship-model
 ```
 
 ## Estrutura atual

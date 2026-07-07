@@ -17,11 +17,10 @@ usage() {
 Uso: scripts/deploy.sh [opções]
 
 Opções:
-  --git-pull   Atualiza o código com git fetch + reset --hard origin/<branch>
+  --git-pull   Atualiza o código com git fetch + reset --hard origin/main
   -h, --help   Mostra esta ajuda
 
 Variáveis de ambiente:
-  DEPLOY_GIT_BRANCH=main          Branch remota (padrão: main)
   DEPLOY_USER_EMAIL=...           Cria usuário na primeira vez (opcional)
   DEPLOY_USER_PASSWORD=...        Senha do usuário inicial (opcional)
 EOF
@@ -43,8 +42,7 @@ if [[ "${GIT_PULL:-0}" == "1" ]]; then
   [[ -d .git ]] || die "--git-pull exige um repositório git"
   log "Atualizando código (origin/${GIT_BRANCH})..."
   git fetch origin
-  git switch "$GIT_BRANCH" 2>/dev/null || git switch -c "$GIT_BRANCH" "origin/$GIT_BRANCH"
-  git reset --hard "origin/$GIT_BRANCH"
+  git reset --hard "origin/${GIT_BRANCH}"
   log "Commit atual: $(git log -1 --oneline)"
 fi
 
@@ -70,6 +68,9 @@ fi
 
 log "Aplicando migrações..."
 pnpm run db:migrate
+
+log "Aplicando migração do modelo de relacionamento (idempotente)..."
+pnpm run db:migrate-relationship-model
 
 if [[ -n "${DEPLOY_USER_EMAIL:-}" && -n "${DEPLOY_USER_PASSWORD:-}" ]]; then
   log "Tentando criar usuário inicial..."
