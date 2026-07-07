@@ -170,6 +170,17 @@ Ou, se o código já estiver atualizado:
 
 O script instala dependências com pnpm, aplica migrações do schema (`db:migrate`), roda a migração idempotente do modelo de relacionamento (`db:migrate-relationship-model`), faz o build standalone e reinicia o PM2.
 
+## Importação em massa (dados pessoais)
+
+Os dados da timeline **não ficam no repositório**. Copie o exemplo e preencha localmente:
+
+```bash
+cp data/timeline-import.example.csv data/timeline-import.csv
+pnpm run db:import
+```
+
+`data/timeline-import.csv` está no `.gitignore`. Use `|` para separar tags na coluna `tags`. Formato de data: `dd/mm/yyyy`.
+
 ## Modelo de dados: pessoa, evento e tags
 
 Uma **pessoa** é a identidade (nome, origem, foto) mais um resumo da relação: `currentStatus`, início/término, como terminou e notas gerais — campos editados diretamente na tela da pessoa, não derivados automaticamente (exceto `currentStatus`, ver abaixo).

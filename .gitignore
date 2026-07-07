@@ -2,6 +2,7 @@ node_modules/
 .next/
 data/*.db
 data/*.db-*
+data/timeline-import.csv
 .env
 .env.local
 .vs/

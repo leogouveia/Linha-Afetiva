@@ -1,0 +1,5 @@
+# Copie para data/timeline-import.csv e preencha com seus dados.
+# Esse arquivo de exemplo pode ser versionado; o CSV real fica no .gitignore.
+date,precision,name,origin,tags,note
+01/01/2024,day,Exemplo A,Tinder,potencial-relacionamento|primeiro-encontro,"Primeiro encontro, boa conversa."
+15/06/2023,approx,Exemplo B,Espontâneo,ghosting,"Sumiu depois de algumas semanas."
