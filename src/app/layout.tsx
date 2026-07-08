@@ -7,6 +7,14 @@ export const metadata: Metadata = {
   description: "Um espaço privado para compreender sua história afetiva.",
   applicationName: "Linha Afetiva",
   appleWebApp: { capable: true, title: "Linha Afetiva", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icons/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icons/favicon.ico", sizes: "any" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
