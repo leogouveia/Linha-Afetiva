@@ -68,7 +68,7 @@ Seguir a ordem abaixo. Ao concluir uma etapa, marcar com `[x]` antes de iniciar 
 ### Pós-MVP
 
 - [ ] Página "Reflexões": texto livre editável para aprendizados e "o que procuro"
-- [ ] Gráficos e estatísticas (padrões por tag, origem, duração)
+- [x] Gráficos e estatísticas (padrões por tag, origem, duração)
 - [ ] Anexos (fotos/arquivos ligados a pessoas ou eventos)
 - [ ] Exportação dos dados
 - [ ] Backups automáticos do SQLite
