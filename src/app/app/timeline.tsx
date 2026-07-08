@@ -125,6 +125,8 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
   const multiEventPersonIds = [...new Set(entries.map((entry) => entry.personId))].filter(
     (id) => entries.filter((entry) => entry.personId === id).length > 1
   );
+  const laneByPerson = new Map<number, number>();
+  multiEventPersonIds.forEach((id, i) => laneByPerson.set(id, LANE_OFFSETS[i % LANE_OFFSETS.length]));
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -143,7 +145,7 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
     const nextSegments: Segment[] = [];
     positionsByPerson.forEach((positions, personId) => {
       if (positions.length < 2) return;
-      const lane = LANE_OFFSETS[multiEventPersonIds.indexOf(personId) % LANE_OFFSETS.length];
+      const lane = laneByPerson.get(personId) ?? 0;
       for (let i = 0; i < positions.length - 1; i++)
         nextSegments.push({ personId, top: positions[i], height: positions[i + 1] - positions[i], lane });
     });
@@ -179,6 +181,7 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
               const outcome = entry.outcome as Outcome | null;
               const emotionalTone = entry.emotionalTone as EmotionalTone | null;
               const color = getPersonColor(entry.personId);
+              const lane = laneByPerson.get(entry.personId) ?? 0;
               return (
                 <li key={entry.id}>
                   {showSeparator && <p className="relative z-10 ml-10 mt-6 mb-2 text-xs font-medium text-slate-400 first:mt-0 dark:text-slate-500">{monthKey}</p>}
@@ -190,7 +193,7 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
                         }}
                         aria-hidden
                         className="relative z-10 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full p-[2px] text-sm font-medium text-white ring-4 ring-white dark:ring-[#17121f]"
-                        style={{ backgroundColor: color }}
+                        style={{ backgroundColor: color, transform: lane ? `translateX(-${lane}px)` : undefined }}
                       >
                         {entry.avatarDataUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
