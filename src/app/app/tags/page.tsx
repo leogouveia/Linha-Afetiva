@@ -1,15 +1,17 @@
-import { asc, count, eq } from "drizzle-orm";
+import { asc, count } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { eventTags, tags } from "@/lib/db/schema";
+import { eventTags, personTags, tags } from "@/lib/db/schema";
 import { TagManager } from "./tag-manager";
 
 export default async function TagsPage() {
-  const rows = await db
-    .select({ id: tags.id, name: tags.name, label: tags.label, scope: tags.scope, color: tags.color, uses: count(eventTags.eventId) })
-    .from(tags)
-    .leftJoin(eventTags, eq(tags.id, eventTags.tagId))
-    .groupBy(tags.id)
-    .orderBy(asc(tags.name));
+  const [tagRows, eventCounts, personCounts] = await Promise.all([
+    db.select({ id: tags.id, name: tags.name, label: tags.label, scope: tags.scope, color: tags.color }).from(tags).orderBy(asc(tags.name)),
+    db.select({ tagId: eventTags.tagId, n: count() }).from(eventTags).groupBy(eventTags.tagId),
+    db.select({ tagId: personTags.tagId, n: count() }).from(personTags).groupBy(personTags.tagId),
+  ]);
+  const eventUsesByTag = new Map(eventCounts.map((row) => [row.tagId, row.n]));
+  const personUsesByTag = new Map(personCounts.map((row) => [row.tagId, row.n]));
+  const rows = tagRows.map((tag) => ({ ...tag, eventUses: eventUsesByTag.get(tag.id) ?? 0, personUses: personUsesByTag.get(tag.id) ?? 0 }));
   return (
     <div className="mx-auto max-w-2xl">
       <p className="text-sm font-medium text-violet-600 dark:text-violet-400">Organização</p>

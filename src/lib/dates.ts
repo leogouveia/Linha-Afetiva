@@ -3,6 +3,12 @@ import type { DatePrecision } from "@/lib/validation/event";
 const dayFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "UTC" });
 const monthFormat = new Intl.DateTimeFormat("pt-BR", { month: "2-digit", year: "numeric", timeZone: "UTC" });
 const monthYearFormat = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
+const monthShortFormat = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit", timeZone: "UTC" });
+
+// Compact label for chart axes, e.g. "mai/25".
+export function formatMonthShort(date: Date) {
+  return monthShortFormat.format(date).replace(".", "");
+}
 
 // Used to group timeline entries under a separator, e.g. "Junho de 2026".
 export function formatMonthYear(date: Date) {

@@ -3,7 +3,14 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tagColors, tagScopeLabels, tagScopes, type TagScope } from "@/lib/validation/tag";
 
-export type TagRow = { id: number; name: string; label: string | null; scope: string; color: string; uses: number };
+export type TagRow = { id: number; name: string; label: string | null; scope: string; color: string; eventUses: number; personUses: number };
+
+function tagUsageParts(tag: TagRow) {
+  const parts: string[] = [];
+  if (tag.eventUses > 0) parts.push(`${tag.eventUses} ${tag.eventUses === 1 ? "registro" : "registros"}`);
+  if (tag.personUses > 0) parts.push(`${tag.personUses} ${tag.personUses === 1 ? "pessoa" : "pessoas"}`);
+  return parts;
+}
 
 const inputClass =
   "w-full rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-3 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-violet-900 dark:bg-violet-950/30 dark:focus:border-violet-500 dark:focus:ring-violet-950";
@@ -112,7 +119,8 @@ export function TagManager({ tags }: { tags: TagRow[] }) {
   }
 
   async function remove(tag: TagRow) {
-    const warning = tag.uses > 0 ? ` Ela está associada a ${tag.uses} ${tag.uses === 1 ? "registro" : "registros"}.` : "";
+    const parts = tagUsageParts(tag);
+    const warning = parts.length > 0 ? ` Ela está associada a ${parts.join(" e ")}.` : "";
     if (!window.confirm(`Excluir a tag "${tag.name}"?${warning}`)) return;
     await request(`/api/tags/${tag.id}`, { method: "DELETE" });
   }
@@ -167,7 +175,7 @@ export function TagManager({ tags }: { tags: TagRow[] }) {
                       {tagScopeLabels[tag.scope as TagScope] ?? tag.scope}
                     </span>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {tag.uses} {tag.uses === 1 ? "registro" : "registros"}
+                      {tagUsageParts(tag).join(" · ") || "Sem uso"}
                     </span>
                   </div>
                   <div className="flex gap-2">

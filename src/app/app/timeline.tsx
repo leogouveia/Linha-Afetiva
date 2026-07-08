@@ -27,12 +27,53 @@ export type TimelineEntry = {
 
 type Segment = { personId: number; top: number; height: number; lane: number };
 
-const LANE_OFFSETS = [0, 9, 18, 27];
+// Trunk sits at the center of the 64px gutter column (see grid-cols-[64px_...] below);
+// -1px compensates for the dashed border's own width so it renders visually centered.
+const TRUNK_X = 31;
+// Lanes spread on both sides of the trunk so all 4 fit inside the 64px gutter
+// (|offset| must stay <= 16: 64/2 - |offset| - 16 (half the dot's width) >= 0).
+const LANE_OFFSETS = [-12, -4, 4, 12];
 const inputClass =
   "rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-violet-900 dark:bg-violet-950/30 dark:focus:border-violet-500 dark:focus:ring-violet-950";
 
 function todayInput() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function normalizeName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+// Small edit-distance check to catch typos of an existing person's name before
+// silently creating a duplicate — the quick composer has no other confirmation step.
+function levenshtein(a: string, b: string) {
+  const rows = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) rows[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost);
+    }
+  }
+  return rows[a.length][b.length];
+}
+
+function findCloseMatch(name: string, people: PersonOption[]) {
+  const normalized = normalizeName(name);
+  let closest: PersonOption | null = null;
+  let closestDistance = Infinity;
+  for (const person of people) {
+    const distance = levenshtein(normalized, normalizeName(person.name));
+    if (distance < closestDistance) {
+      closest = person;
+      closestDistance = distance;
+    }
+  }
+  return closest && closestDistance > 0 && closestDistance <= 2 ? closest : null;
 }
 
 function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOption[] }) {
@@ -59,8 +100,12 @@ function Composer({ people, allTags }: { people: PersonOption[]; allTags: TagOpt
       setError("Informe o título do registro.");
       return;
     }
+    const existing = people.find((person) => normalizeName(person.name) === normalizeName(trimmedName));
+    if (!existing) {
+      const closeMatch = findCloseMatch(trimmedName, people);
+      if (closeMatch && !window.confirm(`Já existe uma pessoa chamada "${closeMatch.name}". Criar "${trimmedName}" como pessoa nova mesmo assim?`)) return;
+    }
     setSaving(true);
-    const existing = people.find((person) => person.name.trim().toLowerCase() === trimmedName.toLowerCase());
     const body = existing
       ? { personId: existing.id, date, datePrecision: "day", title: trimmedTitle, status, tagIds }
       : { name: trimmedName, origin: "Não informado", date, datePrecision: "day", title: trimmedTitle, status, tagIds };
@@ -164,12 +209,12 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
         </p>
       ) : (
         <div ref={containerRef} className="relative mt-8">
-          <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-violet-100 dark:bg-violet-950" />
+          <div className="absolute top-2 bottom-2 w-0.5 bg-violet-100 dark:bg-violet-950" style={{ left: TRUNK_X }} />
           {segments.map((segment, index) => (
             <div
               key={index}
               aria-hidden
-              style={{ position: "absolute", left: 19 - segment.lane, top: segment.top, height: segment.height, borderLeft: `2px dashed ${getPersonColor(segment.personId)}` }}
+              style={{ position: "absolute", left: TRUNK_X - segment.lane, top: segment.top, height: segment.height, borderLeft: `2px dashed ${getPersonColor(segment.personId)}` }}
             />
           ))}
           <ul>
@@ -184,8 +229,8 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
               const lane = laneByPerson.get(entry.personId) ?? 0;
               return (
                 <li key={entry.id}>
-                  {showSeparator && <p className="relative z-10 ml-10 mt-6 mb-2 text-xs font-medium text-slate-400 first:mt-0 dark:text-slate-500">{monthKey}</p>}
-                  <div className="tl-item grid grid-cols-[40px_minmax(0,1fr)]" style={{ animationDelay: `${Math.min(index, 12) * 0.03}s` }}>
+                  {showSeparator && <p className="relative z-10 ml-16 mt-6 mb-2 text-xs font-medium text-slate-400 first:mt-0 dark:text-slate-500">{monthKey}</p>}
+                  <div className="tl-item grid grid-cols-[64px_minmax(0,1fr)]" style={{ animationDelay: `${Math.min(index, 12) * 0.03}s` }}>
                     <div className="flex justify-center pt-[14px]">
                       <span
                         ref={(el) => {
@@ -193,7 +238,7 @@ export function Timeline({ entries, people, allTags }: { entries: TimelineEntry[
                         }}
                         aria-hidden
                         className="relative z-10 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full p-[2px] text-sm font-medium text-white ring-4 ring-white dark:ring-[#17121f]"
-                        style={{ backgroundColor: color, transform: lane ? `translateX(-${lane}px)` : undefined }}
+                        style={{ backgroundColor: color, transform: lane ? `translateX(${-lane}px)` : undefined }}
                       >
                         {entry.avatarDataUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
