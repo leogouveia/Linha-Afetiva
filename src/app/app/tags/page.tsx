@@ -5,7 +5,10 @@ import { TagManager } from "./tag-manager";
 
 export default async function TagsPage() {
   const [tagRows, eventCounts, personCounts] = await Promise.all([
-    db.select({ id: tags.id, name: tags.name, label: tags.label, scope: tags.scope, color: tags.color }).from(tags).orderBy(asc(tags.name)),
+    db
+      .select({ id: tags.id, name: tags.name, label: tags.label, scope: tags.scope, color: tags.color, category: tags.category, description: tags.description })
+      .from(tags)
+      .orderBy(asc(tags.name)),
     db.select({ tagId: eventTags.tagId, n: count() }).from(eventTags).groupBy(eventTags.tagId),
     db.select({ tagId: personTags.tagId, n: count() }).from(personTags).groupBy(personTags.tagId),
   ]);

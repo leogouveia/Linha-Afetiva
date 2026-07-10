@@ -1,0 +1,84 @@
+tag;label;scope;category;description
+beijo;Beijo;event;afeto-conexao;Beijo, beijo intenso ou momento de aproximação física.
+carinho;Carinho;event;afeto-conexao;Gestos de cuidado, ternura ou atenção afetiva.
+acolhimento;Acolhimento;event;afeto-conexao;Sensação de ter sido recebido, ouvido ou validado.
+elogio;Elogio;event;afeto-conexao;Houve elogios relevantes ou validação positiva.
+quimica;Química;event;afeto-conexao;Boa química geral, não necessariamente sexual.
+boa-conversa;Boa conversa;event;afeto-conexao;Conversa fluiu bem e foi agradável.
+conversa-profunda;Conversa profunda;event;afeto-conexao;Conversa com abertura, profundidade ou intimidade emocional.
+vulnerabilidade;Vulnerabilidade;event;afeto-conexao;Alguém se abriu emocionalmente ou mostrou fragilidade.
+abertura;Abertura;event;afeto-conexao;Houve uma abertura nova ou sinal de aproximação.
+me-senti-visto;Me senti visto;event;afeto-conexao;Sensação de ter sido percebido de verdade.
+me-senti-desejado;Me senti desejado;event;afeto-conexao;Sensação de desejo vindo do outro.
+me-senti-acolhido;Me senti acolhido;event;afeto-conexao;Sensação de acolhimento emocional.
+interesse-demonstrado;Interesse demonstrado;event;interesse-reciprocidade;O outro demonstrou interesse de forma clara.
+pouca-curiosidade;Pouca curiosidade;event;interesse-reciprocidade;O outro demonstrou pouco interesse em saber sobre você.
+so-falou-dele;Só falou dele;event;interesse-reciprocidade;A conversa ficou muito centrada no outro.
+perguntou-sobre-mim;Perguntou sobre mim;event;interesse-reciprocidade;O outro fez perguntas sobre sua vida, sentimentos ou história.
+nao-perguntou-sobre-mim;Não perguntou sobre mim;event;interesse-reciprocidade;O outro quase não demonstrou curiosidade sobre você.
+conversa-equilibrada;Conversa equilibrada;event;interesse-reciprocidade;A troca pareceu equilibrada entre os dois.
+conversa-unilateral;Conversa unilateral;event;interesse-reciprocidade;A interação pareceu desequilibrada ou puxada por um lado só.
+iniciativa-dele;Iniciativa dele;event;interesse-reciprocidade;O outro tomou iniciativa relevante.
+iniciativa-minha;Iniciativa minha;event;interesse-reciprocidade;Você tomou a iniciativa principal.
+reciprocidade;Reciprocidade;event;interesse-reciprocidade;Houve sensação de troca mútua.
+falta-de-reciprocidade;Falta de reciprocidade;event;interesse-reciprocidade;A troca pareceu desigual ou pouco correspondida.
+combinou-proximo-encontro;Combinou próximo encontro;event;continuidade-expectativa;Houve combinação concreta de próximo encontro.
+falou-de-futuro;Falou de futuro;event;continuidade-expectativa;Houve menção a planos futuros ou continuidade.
+deixou-em-aberto;Deixou em aberto;event;continuidade-expectativa;A continuidade ficou vaga ou indefinida.
+ficou-pendente;Ficou pendente;event;continuidade-expectativa;Algo importante ficou sem definição.
+gerou-expectativa;Gerou expectativa;event;continuidade-expectativa;O evento aumentou expectativa emocional.
+expectativa-alta;Expectativa alta;event;continuidade-expectativa;Você saiu com expectativa elevada.
+continuidade;Continuidade;event;continuidade-expectativa;O evento deu sensação de sequência possível.
+sem-continuidade;Sem continuidade;event;continuidade-expectativa;O evento não gerou sequência clara.
+promessa-vaga;Promessa vaga;event;continuidade-expectativa;Houve promessa ou sugestão sem compromisso claro.
+sinal-misto;Sinal misto;event;sinais-ambiguos;Houve sinais contraditórios.
+ambiguidade;Ambiguidade;event;sinais-ambiguos;A interação ficou ambígua ou difícil de interpretar.
+frieza;Frieza;event;sinais-ambiguos;O outro pareceu frio ou distante.
+distancia;Distância;event;sinais-ambiguos;Houve sensação de afastamento.
+mudanca-de-tom;Mudança de tom;event;sinais-ambiguos;A energia da conversa mudou de forma perceptível.
+resposta-fria;Resposta fria;event;sinais-ambiguos;Resposta seca, distante ou pouco engajada.
+demora-responder;Demora para responder;event;sinais-ambiguos;Demora relevante em responder.
+evitou-assunto;Evitou assunto;event;sinais-ambiguos;O outro evitou um tema importante.
+clima-estranho;Clima estranho;event;sinais-ambiguos;A interação teve uma sensação estranha ou desconfortável.
+energia-confusa;Energia confusa;event;sinais-ambiguos;A energia do evento ficou difícil de entender.
+ciumes;Ciúmes;event;conflito-desconforto;Houve ciúmes ou insegurança ligada a terceiros.
+desentendimento;Desentendimento;event;conflito-desconforto;Houve ruído, conflito leve ou discordância.
+cobranca;Cobrança;event;conflito-desconforto;Houve cobrança, explícita ou implícita.
+pressao;Pressão;event;conflito-desconforto;Alguém se sentiu pressionado ou cobrado.
+desconforto;Desconforto;event;conflito-desconforto;Você sentiu desconforto na interação.
+gatilho;Gatilho;event;conflito-desconforto;O evento ativou gatilhos emocionais.
+ansiedade;Ansiedade;event;conflito-desconforto;A interação gerou ansiedade.
+inseguranca-minha;Insegurança minha;event;conflito-desconforto;Sua insegurança apareceu no evento.
+me-senti-rejeitado;Me senti rejeitado;event;conflito-desconforto;Você sentiu rejeição, mesmo que não tenha sido explícita.
+me-senti-ignorado;Me senti ignorado;event;conflito-desconforto;Você sentiu falta de atenção ou consideração.
+limite-colocado;Limite colocado;event;conflito-desconforto;Você ou o outro colocou um limite.
+limite-respeitado;Limite respeitado;event;conflito-desconforto;Um limite foi respeitado.
+limite-ultrapassado;Limite ultrapassado;event;conflito-desconforto;Um limite foi ultrapassado.
+bloqueio;Bloqueio;event;encerramento-ruptura;Houve bloqueio em rede social ou mensageiro.
+sumico;Sumiço;event;encerramento-ruptura;A pessoa sumiu ou parou de responder.
+sem-retorno;Sem retorno;event;encerramento-ruptura;Não houve resposta ou continuidade depois.
+conversa-final;Conversa final;event;encerramento-ruptura;Conversa com tom de encerramento.
+pedido-desculpas;Pedido de desculpas;event;encerramento-ruptura;Houve pedido de desculpas.
+rejeicao-explicita;Rejeição explícita;event;encerramento-ruptura;Houve rejeição direta ou verbalizada.
+explicacao-confusa;Explicação confusa;event;encerramento-ruptura;A explicação dada foi pouco clara ou contraditória.
+encerramento-abrupto;Encerramento abrupto;event;encerramento-ruptura;O fim aconteceu de forma brusca.
+encerramento-saudavel;Encerramento saudável;event;encerramento-ruptura;O encerramento foi claro, respeitoso ou bem conduzido.
+ficou-mal-resolvido;Ficou mal resolvido;event;encerramento-ruptura;A situação terminou sem fechamento satisfatório.
+sexo;Sexo;event;sexo-intimidade;Houve sexo dentro de um evento que não necessariamente tinha sexo como tipo principal.
+muito-beijo;Muito beijo;event;sexo-intimidade;Houve muito beijo ou contato físico intenso.
+desejo;Desejo;event;sexo-intimidade;Houve sensação clara de desejo.
+quimica-sexual;Química sexual;event;sexo-intimidade;Houve química sexual relevante.
+toque;Toque;event;sexo-intimidade;Toque físico relevante, carinhoso ou íntimo.
+dormiu-junto;Dormiu junto;event;sexo-intimidade;Dormiram juntos ou passaram a noite juntos.
+intimidade;Intimidade;event;sexo-intimidade;Houve aumento de intimidade física ou emocional.
+desconforto-sexual;Desconforto sexual;event;sexo-intimidade;Houve desconforto ligado à intimidade ou sexo.
+limite-sexual;Limite sexual;event;sexo-intimidade;Houve limite sexual colocado, respeitado ou discutido.
+ansiedade-minha;Ansiedade minha;event;auto-observacao;Sua ansiedade ficou perceptível no evento.
+carencia-ativada;Carência ativada;event;auto-observacao;O evento ativou carência ou necessidade de validação.
+medo-de-rejeicao;Medo de rejeição;event;auto-observacao;O medo de rejeição apareceu ou guiou sua leitura.
+medo-de-repeticao;Medo de repetição;event;auto-observacao;O evento ativou medo de repetir histórias anteriores.
+fui-reativo;Fui reativo;event;auto-observacao;Você percebeu reação impulsiva ou defensiva sua.
+consegui-regular;Consegui regular;event;auto-observacao;Você conseguiu regular ansiedade ou emoção.
+fui-com-calma;Fui com calma;event;auto-observacao;Você conseguiu respeitar o ritmo sem acelerar demais.
+observei-mais;Observei mais;event;auto-observacao;Você observou a situação antes de agir ou cobrar.
+investi-demais;Investi demais;event;auto-observacao;Você percebeu investimento emocional acima da reciprocidade.

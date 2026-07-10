@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { TagScope } from "@/lib/validation/tag";
 
-export type TagOption = { id: number; name: string; color: string; scope: TagScope };
+export type TagOption = { id: number; name: string; color: string; scope: TagScope; description?: string | null };
 
 export function relationshipScopeTags<T extends { scope: TagScope }>(tags: T[]) {
   return tags.filter((tag) => tag.scope === "relationship" || tag.scope === "both");
@@ -66,6 +66,7 @@ export function TagMultiSelect({
         {selected.map((tag) => (
           <span
             key={tag.id}
+            title={tag.description ?? undefined}
             className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2.5 py-1 text-sm text-violet-900 dark:bg-violet-950/60 dark:text-violet-100"
           >
             <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: tag.color }} />
@@ -116,6 +117,7 @@ export function TagMultiSelect({
               <button
                 type="button"
                 onClick={() => add(tag.id)}
+                title={tag.description ?? undefined}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-violet-50 dark:text-slate-300 dark:hover:bg-violet-950/60"
               >
                 <span aria-hidden className="size-2.5 rounded-full" style={{ backgroundColor: tag.color }} />

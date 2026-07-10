@@ -11,6 +11,7 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:import": "tsx scripts/import-timeline.ts",
+    "db:import-tags": "tsx scripts/import-tags.ts",
     "db:migrate-relationship-model": "tsx scripts/migrate-relationship-model.ts",
     "user:create": "tsx scripts/create-user.ts",
     "user:reset-password": "tsx scripts/reset-password.ts",

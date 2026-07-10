@@ -23,6 +23,9 @@ export const people = sqliteTable("people", {
 
 // scope: "relationship" | "event" | "both" — which picker(s) offer this tag (src/lib/validation/tag.ts).
 // label is an optional display name; UI falls back to `name` when absent.
+// category: optional free-text grouping (e.g. "afeto-conexao", "conflito-desconforto") used to
+// section the tag list in /app/tags once it grows past a flat scan — not a fixed enum, just a
+// label of convenience from whatever taxonomy the tags were seeded with.
 export const tags = sqliteTable(
   "tags",
   {
@@ -31,6 +34,8 @@ export const tags = sqliteTable(
     label: text("label"),
     scope: text("scope").notNull().default("both"),
     color: text("color").notNull().default("#8b5cf6"),
+    category: text("category"),
+    description: text("description"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" }),
   },

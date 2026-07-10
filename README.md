@@ -181,6 +181,25 @@ pnpm run db:import
 
 `data/timeline-import.csv` está no `.gitignore`. Use `|` para separar tags na coluna `tags`. Formato de data: `dd/mm/yyyy`.
 
+### Taxonomia de tags em lote
+
+Diferente do import acima, `scripts/data/*.csv` **não é dado pessoal** — são só definições de tags (nome, rótulo, escopo, categoria, descrição), então ficam versionadas. Para importar/atualizar:
+
+```bash
+pnpm run db:import-tags
+# ou apontando para outro arquivo:
+pnpm run db:import-tags -- scripts/data/outro-arquivo.csv
+```
+
+Formato do CSV (`;` como separador, sem aspas — a descrição vai até o fim da linha):
+
+```
+tag;label;scope;category;description
+sinal-misto;Sinal misto;event;sinais-ambiguos;Houve sinais contraditórios.
+```
+
+Idempotente: casa por nome (com acentos normalizados), nunca reduz o `scope` de uma tag existente (só une — `relationship` + `event` vira `both`) e só preenche `label`/`category`/`description` se estiverem vazios, para não sobrescrever edições feitas em `/app/tags`.
+
 ## Modelo de dados: pessoa, evento e tags
 
 Uma **pessoa** é a identidade (nome, origem, foto) mais um resumo da relação: `currentStatus`, início/término, como terminou e notas gerais — campos editados diretamente na tela da pessoa, não derivados automaticamente (exceto `currentStatus`, ver abaixo).
@@ -210,4 +229,4 @@ pnpm run db:migrate-relationship-model
 - `src/lib/auth`: JWT e sessão
 - `src/lib/db`: conexão Drizzle e schema
 - `src/lib/validation`: schemas Zod
-- `scripts`: migração, migração do modelo pessoa/evento, seed de tags, importação em massa, criação/reset de usuário
+- `scripts`: migração, migração do modelo pessoa/evento, seed de tags, importação em massa (timeline e taxonomia de tags), criação/reset de usuário

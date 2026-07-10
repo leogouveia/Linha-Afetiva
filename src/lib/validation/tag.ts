@@ -27,6 +27,8 @@ export const tagSchema = z.object({
   label: z.preprocess(emptyToUndefined, z.string().trim().max(80, "Nome de exibição muito longo.").optional()),
   scope: z.enum(tagScopes, { error: "Escopo inválido." }),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida."),
+  category: z.preprocess(emptyToUndefined, z.string().trim().max(50, "Categoria muito longa.").optional()),
+  description: z.preprocess(emptyToUndefined, z.string().trim().max(500, "Descrição muito longa.").optional()),
 });
 
 export type TagInput = z.infer<typeof tagSchema>;
